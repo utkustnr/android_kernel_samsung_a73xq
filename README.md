@@ -180,4 +180,3 @@ Add the following code before the last line of this file
 
         CONFIG_HID_AKSYS_QRD=m
         CONFIG_AKSYS_QRD_FF=y
-.
