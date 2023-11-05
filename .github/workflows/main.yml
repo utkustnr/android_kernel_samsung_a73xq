@@ -1,0 +1,106 @@
+name: Build TWRP Kernel
+
+on: workflow_dispatch
+
+jobs:
+  build:
+    permissions: write-all
+    runs-on: ubuntu-20.04
+    steps:
+    - name: Checkout Kernel Source
+      uses: actions/checkout@v4
+      with:
+        ref: twrp-12.1
+
+    - name: Install dependencies
+      run: |
+        sudo apt-get update -y 
+        sudo apt install bc bison build-essential curl flex g++-multilib gcc-multilib git git-lfs gnupg gperf imagemagick jq lib32ncurses5-dev lib32readline-dev lib32z1-dev libelf-dev liblz4-tool libncurses5 libncurses5-dev libsdl1.2-dev libssl-dev libwxgtk3.0-gtk3-dev libxml2 libxml2-utils lunzip lzop pngcrush python-is-python3 python3 rr rsync schedtool simg2img squashfs-tools unzip virtualenv xattr xmlstarlet xsltproc xz-utils zip zlib1g-dev -y
+
+    - name: Get Toolchain
+      run: |
+        mkdir -p toolchain/clang-r383902b1
+        git clone https://github.com/LineageOS/android_prebuilts_gcc_linux-x86_aarch64_aarch64-linux-android-4.9.git --depth=1 -b lineage-19.1 toolchain/aarch64-linux-android-4.9
+        wget https://android.googlesource.com/platform/prebuilts/clang/host/linux-x86/+archive/refs/heads/android11-qpr3-release/clang-r383902b1.tar.gz -P toolchain
+        tar xf toolchain/clang-r383902b1.tar.gz -C toolchain/clang-r383902b1
+
+    - name: Build Kernel
+      run: |
+        export ARCH=arm64
+        export LLVM=1
+        export CLANG_PREBUILT_BIN=$(pwd)/toolchain/clang-r383902b1/bin
+        export PATH=$PATH:$CLANG_PREBUILT_BIN
+        BUILD_CROSS_COMPILE=$(pwd)/toolchain/aarch64-linux-android-4.9/bin/aarch64-linux-android-
+        KERNEL_LLVM_BIN=$(pwd)/toolchain/clang-r383902b1/bin/clang
+        CLANG_TRIPLE=aarch64-linux-gnu-
+        KERNEL_MAKE_ENV="CONFIG_BUILD_ARM64_DT_OVERLAY=y"
+        mkdir out
+        make -j$(nproc) -C $(pwd) O=out $KERNEL_MAKE_ENV ARCH=arm64 CROSS_COMPILE=$BUILD_CROSS_COMPILE REAL_CC=$KERNEL_LLVM_BIN CLANG_TRIPLE=$CLANG_TRIPLE CONFIG_SECTION_MISMATCH_WARN_ONLY=y vendor/a73xq_eur_open_defconfig
+        make -j$(nproc) -C $(pwd) O=out $KERNEL_MAKE_ENV ARCH=arm64 CROSS_COMPILE=$BUILD_CROSS_COMPILE REAL_CC=$KERNEL_LLVM_BIN CLANG_TRIPLE=$CLANG_TRIPLE CONFIG_SECTION_MISMATCH_WARN_ONLY=y
+
+    - name: Repack Images
+      run: |
+        echo "# Get kernel artifacts"
+        mkdir -p artifacts
+        cp out/arch/arm64/boot/Image artifacts/
+        cp out/arch/arm64/boot/dtbo.img artifacts/
+        cp out/arch/arm64/boot/dts/vendor/qcom/yupik.dtb artifacts/yupik.dtb
+        echo "# Fetch AIK and stock images"
+        wget -O aik.tar.gz https://xdaforums.com/attachments/aik-linux-v3-8-all-tar-gz.5300923
+        tar xf aik.tar.gz
+        curl https://gist.githubusercontent.com/utkustnr/1d15d9b83a782a8b3da270829277e603/raw/boot-vboot.zip.base64 | base64 --decode > AIK-Linux/boot-vboot.zip
+        unzip -d AIK-Linux AIK-Linux/boot-vboot.zip
+        echo "# Process boot.img"
+        bash AIK-Linux/unpackimg.sh --nosudo boot.img
+        cp artifacts/Image AIK-Linux/split_img/boot.img-kernel
+        sed -i ' 1 s/.*/& androidboot.selinux=permissive/' AIK-Linux/split_img/boot.img-cmdline
+        bash AIK-Linux/repackimg.sh
+        mv AIK-Linux/image-new.img artifacts/boot.img
+        bash AIK-Linux/cleanup.sh
+        echo "# Process vendor_boot.img"
+        bash AIK-Linux/unpackimg.sh --nosudo vendor_boot.img
+        cp artifacts/yupik.dtb AIK-Linux/split_img/vendor_boot.img-dtb
+        sed -i ' 1 s/.*/& androidboot.selinux=permissive/' AIK-Linux/split_img/vendor_boot.img-vendor_cmdline
+        bash AIK-Linux/repackimg.sh
+        mv AIK-Linux/image-new.img artifacts/vendor_boot.img
+        bash AIK-Linux/cleanup.sh
+
+    - name: Clean Up Drivers
+      run: |
+        llvm-strip --strip-unneeded out/drivers/input/sec_input/sec_cmd.ko -o artifacts/sec_cmd.ko
+        llvm-strip --strip-unneeded out/drivers/input/sec_input/sec_common_fn.ko -o artifacts/sec_common_fn.ko
+        llvm-strip --strip-unneeded out/drivers/input/sec_input/sec_secure_touch.ko -o artifacts/sec_secure_touch.ko
+        llvm-strip --strip-unneeded out/drivers/input/sec_input/sec_tclm_v2.ko -o artifacts/sec_tclm_v2.ko
+        llvm-strip --strip-unneeded out/drivers/input/sec_input/sec_tsp_dumpkey.ko -o artifacts/sec_tsp_dumpkey.ko
+        llvm-strip --strip-unneeded out/drivers/input/sec_input/sec_tsp_log.ko -o artifacts/sec_tsp_log.ko
+        llvm-strip --strip-unneeded out/drivers/input/sec_input/stm/stm_ts.ko -o artifacts/stm_ts.ko
+        llvm-strip --strip-unneeded out/drivers/input/sec_input/synaptics/synaptics_ts.ko -o artifacts/synaptics_ts.ko
+
+    - name: Make Installer Script
+      run: |
+        mkdir -p installer/images installer/META-INF/com/google/android
+        touch installer/META-INF/com/google/android/update-binary installer/META-INF/com/google/android/updater-script
+        echo "# Dummy file; update-binary is a shell script." > installer/META-INF/com/google/android/updater-script
+        curl https://gist.githubusercontent.com/utkustnr/8bd6cd7a48846d34c959424558be4ae1/raw/update-binary > installer/META-INF/com/google/android/update-binary
+        cp artifacts/*.img installer/images
+
+    - name: Upload Installer
+      uses: actions/upload-artifact@v3
+      with:
+        name: Installer
+        path: installer/
+
+    - name: Upload Images
+      uses: actions/upload-artifact@v3
+      with:
+        name: Images
+        path: |
+            artifacts/*.img
+            artifacts/Image
+            artifacts/yupik.dtb
+
+    - name: Upload Drivers
+      uses: actions/upload-artifact@v3
+      with:
+        name: Drivers
+        path: artifacts/*.ko
