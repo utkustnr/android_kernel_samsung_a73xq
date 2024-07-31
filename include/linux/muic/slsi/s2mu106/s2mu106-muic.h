@@ -20,7 +20,7 @@
 #ifndef __S2MU106_MUIC_H__
 #define __S2MU106_MUIC_H__
 
-#include <linux/muic/common/muic_a73xq.h>
+#include <linux/muic/common/muic.h>
 #include <linux/muic/common/muic_interface.h>
 #include <linux/muic/slsi/s2mu106/s2mu106-muic-hv.h>
 #include <linux/pm_wakeup.h>

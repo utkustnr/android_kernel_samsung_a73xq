@@ -34,7 +34,7 @@
 #include <linux/mfd/slsi/s2mu106/s2mu106.h>
 
 /* MUIC header file */
-#include <linux/muic/common/muic_a73xq.h>
+#include <linux/muic/common/muic.h>
 #include <linux/muic/slsi/s2mu106/s2mu106-muic.h>
 #include <linux/muic/slsi/s2mu106/s2mu106-muic-hv.h>
 #ifdef CONFIG_MUIC_MANAGER
@@ -42,7 +42,7 @@
 #endif
 
 #if IS_ENABLED(CONFIG_MUIC_NOTIFIER)
-#include <linux/muic/common/muic_notifier_a73xq.h>
+#include <linux/muic/common/muic_notifier.h>
 #endif /* CONFIG_MUIC_NOTIFIER */
 #include <linux/delay.h>
 
@@ -339,6 +339,7 @@ static void _s2mu106_hv_muic_reset(struct s2mu106_muic_data *muic_data)
 static bool _s2mu106_hv_muic_check_afc_enabled(struct s2mu106_muic_data *muic_data)
 {
 	char *str = NULL;
+	int afc_request_cause = 0;
 #if IS_ENABLED(CONFIG_MUIC_MANAGER)
 	struct muic_interface_t *muic_if;
 
@@ -365,6 +366,10 @@ static bool _s2mu106_hv_muic_check_afc_enabled(struct s2mu106_muic_data *muic_da
 	} else if (muic_data->is_requested_step_down == true) {
 		str = "requested step down";
 #endif
+	} else if (muic_is_enable_afc_request() == false) {
+		str = "HV REQUEST DISABLED";
+		afc_request_cause = muic_afc_get_request_cause();
+		pr_info("%s high voltage is not enabled! cause(%d)\n", __func__, afc_request_cause);
 	}
 
 	if (str) {

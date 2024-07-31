@@ -29,19 +29,19 @@
 #include <linux/module.h>
 #include <linux/delay.h>
 #include <linux/version.h>
-#include <linux/muic/common/muic_a73xq.h>
+#include <linux/muic/common/muic.h>
 #include <linux/mfd/slsi/s2mu106/s2mu106.h>
 #include <linux/muic/slsi/s2mu106/s2mu106-muic.h>
 
 #if IS_ENABLED(CONFIG_MUIC_SYSFS)
-#include <linux/muic/common/muic_sysfs_a73xq.h>
+#include <linux/muic/common/muic_sysfs.h>
 #endif
 #if IS_ENABLED(CONFIG_HV_MUIC_S2MU106_AFC)
 #include <linux/muic/slsi/s2mu106/s2mu106-muic-hv.h>
 #endif
 
 #if IS_ENABLED(CONFIG_MUIC_NOTIFIER)
-#include <linux/muic/common/muic_notifier_a73xq.h>
+#include <linux/muic/common/muic_notifier.h>
 #endif
 
 #if IS_ENABLED(CONFIG_USB_HOST_NOTIFY)
@@ -2497,7 +2497,6 @@ static int s2mu106_muic_probe(struct platform_device *pdev)
 	mutex_init(&muic_data->bcd_rescan_mutex);
 
 #if LINUX_VERSION_CODE < KERNEL_VERSION(4, 19, 188)
-	wakeup_source_init(muic_data->muic_ws, "muic_wake");   // 4.19 R
 	if (!(muic_data->muic_ws)) {
 		muic_data->muic_ws = wakeup_source_create("muic_wake"); // 4.19 Q
 		if (muic_data->muic_ws)

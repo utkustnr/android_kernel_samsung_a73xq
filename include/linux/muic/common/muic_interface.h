@@ -20,7 +20,7 @@
 #ifndef __MUIC_INTERNAL_H__
 #define __MUIC_INTERNAL_H__
 
-#include <linux/muic/common/muic_a73xq.h>
+#include <linux/muic/common/muic.h>
 
 #if IS_ENABLED(CONFIG_MUIC_SUPPORT_POWERMETER)
 #include <linux/power_supply.h>

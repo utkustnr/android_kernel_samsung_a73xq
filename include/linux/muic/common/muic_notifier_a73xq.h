@@ -1,5 +1,5 @@
 /*
- * include/linux/muic/common/muic_notifier_a73xq.h
+ * include/linux/muic/common/muic_notifier.h
  *
  * header file supporting MUIC notifier call chain information
  *
@@ -21,10 +21,10 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307 USA
  *
  */
-#ifndef __MUIC_NOTIFIER_A73XQ_H__
-#define __MUIC_NOTIFIER_A73XQ_H__
+#ifndef __MUIC_NOTIFIER_H__
+#define __MUIC_NOTIFIER_H__
 
-#include <linux/muic/common/muic_a73xq.h>
+#include <linux/muic/common/muic.h>
 #include <linux/muic/common/muic_param.h>
 
 #if IS_ENABLED(CONFIG_PDIC_NOTIFIER)
@@ -98,4 +98,4 @@ extern int muic_notifier_unregister(struct notifier_block *nb);
 /* Choose a proper noti. interface for a test */
 extern void muic_notifier_set_new_noti(bool flag);
 
-#endif /* __MUIC_NOTIFIER_A73XQ_H__ */
+#endif /* __MUIC_NOTIFIER_H__ */

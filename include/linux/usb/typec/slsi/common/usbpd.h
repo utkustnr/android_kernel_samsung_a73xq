@@ -3,7 +3,7 @@
 
 #include <linux/usb/typec/slsi/common/usbpd_msg.h>
 #include <linux/usb/typec/common/pdic_core.h>
-#include <linux/muic/common/muic_a73xq.h>
+#include <linux/muic/common/muic.h>
 
 #include <linux/time.h>
 #include <linux/kernel.h>
@@ -64,6 +64,9 @@
 #define tNoResponse (5500) /* 660~1000ms */
 #define tDRPtry (75) /* 75~150ms */
 #define tTryCCDebounce (15) /* 10~20ms */
+
+/* Custom Timer */
+#define tStartAmsMargin (100)
 
 enum s2m_pdic_power_role {
 	PDIC_SINK,
@@ -658,6 +661,7 @@ struct policy_data {
 	int				selected_pdo_num;
 	int				requested_pdo_type;
 	int				requested_pdo_num;
+	int			got_ufp_vdm;
 };
 
 struct protocol_data {

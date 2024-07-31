@@ -23,8 +23,8 @@
 #include <linux/mfd/slsi/s2mu106/s2mu106.h>
 
 #if IS_ENABLED(CONFIG_MUIC_NOTIFIER)
-#include <linux/muic/common/muic_a73xq.h>
-#include <linux/muic/common/muic_notifier_a73xq.h>
+#include <linux/muic/common/muic.h>
+#include <linux/muic/common/muic_notifier.h>
 #endif /* CONFIG_MUIC_NOTIFIER */
 
 #include "../../common/sec_charging_common.h"
@@ -295,7 +295,6 @@ ssize_t s2mu106_chg_store_attrs(struct device *dev,
 
 #define REDUCE_CURRENT_STEP         25
 #define MINIMUM_INPUT_CURRENT           300
-#define SLOW_CHARGING_CURRENT_STANDARD      400
 
 #define FAKE_BAT_LEVEL          50
 
