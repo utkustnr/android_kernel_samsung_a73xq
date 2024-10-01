@@ -1039,7 +1039,7 @@ void *radix_tree_tag_clear(struct radix_tree_root *root,
 {
 	struct radix_tree_node *node, *parent;
 	unsigned long maxindex;
-	int uninitialized_var(offset);
+	int offset;
 
 	radix_tree_load_root(root, &node, &maxindex);
 	if (index > maxindex)
@@ -1293,6 +1293,53 @@ radix_tree_gang_lookup(const struct radix_tree_root *root, void **results,
 	return ret;
 }
 EXPORT_SYMBOL(radix_tree_gang_lookup);
+
+/**
+ *	radix_tree_gang_lookup_index - perform multiple lookup on a radix tree
+ *	@root:		radix tree root
+ *	@results:	where the results of the lookup are placed
+ *	@indices:	where their indices should be placed
+ *	@first_index:	start the lookup from this key
+ *	@max_items:	place up to this many items at *results
+ *
+ *	Performs an index-ascending scan of the tree for present items.  Places
+ *	them at *@results and returns the number of items which were placed at
+ *	*@results. The indices are placed in @indices.
+ *
+ *	The implementation is naive.
+ *
+ *	Just one difference from radix_tree_gang_lookup, the indices are also
+ *	collected along with the results of lookup.
+ */
+unsigned int
+radix_tree_gang_lookup_index(const struct radix_tree_root *root, void **results,
+			unsigned long *indices, unsigned long first_index,
+			unsigned int max_items)
+{
+	struct radix_tree_iter iter;
+	void **slot;
+	unsigned int ret = 0;
+
+	if (unlikely(!max_items))
+		return 0;
+
+	radix_tree_for_each_slot(slot, root, &iter, first_index) {
+		results[ret] = rcu_dereference_raw(*slot);
+		if (!results[ret])
+			continue;
+		if (radix_tree_is_internal_node(results[ret])) {
+			slot = radix_tree_iter_retry(&iter);
+			continue;
+		}
+		if (indices)
+			indices[ret] = iter.index;
+		if (++ret == max_items)
+			break;
+	}
+
+	return ret;
+}
+EXPORT_SYMBOL(radix_tree_gang_lookup_index);
 
 /**
  *	radix_tree_gang_lookup_tag - perform multiple lookup on a radix tree

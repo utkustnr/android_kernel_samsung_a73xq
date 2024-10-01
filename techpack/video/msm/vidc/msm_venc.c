@@ -1448,7 +1448,12 @@ int msm_venc_s_fmt(struct msm_vidc_inst *inst, struct v4l2_format *f)
 				"%s: session not supported\n", __func__);
 			goto exit;
 		}
-
+		rc = msm_comm_check_memory_supported(inst);
+        if (rc) {
+            s_vpr_e(inst->sid,
+                "Memory not sufficient to proceed current session\n");
+            return rc;
+        }
 		memcpy(f, &fmt->v4l2_fmt, sizeof(struct v4l2_format));
 	} else {
 		s_vpr_e(inst->sid, "%s: Unsupported buf type: %d\n",

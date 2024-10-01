@@ -1,7 +1,6 @@
 /* SPDX-License-Identifier: GPL-2.0-only */
 /*
  * Copyright (c) 2016-2021, The Linux Foundation. All rights reserved.
- * Copyright (c) 2023 Qualcomm Innovation Center, Inc. All rights reserved.
  */
 
 #ifndef _CAM_REQ_MGR_UTIL_API_H_
@@ -122,13 +121,13 @@ int32_t cam_create_link_hdl(struct cam_create_dev_hdl *hdl_data);
 /**
  * cam_get_device_priv() - get private data of a device handle
  * @dev_hdl: handle for a device
+
  *
  * cam_req_mgr_core and KMD drivers use this function to
  * get private data of a handle. Returns a private data
  * structure pointer.
  */
 void *cam_get_device_priv(int32_t dev_hdl);
-
 /**
  * cam_get_session_priv() - get private data of a session handle
  * @dev_hdl: handle for a session
@@ -165,7 +164,6 @@ void *cam_get_device_ops(int32_t dev_hdl);
  * Returns success/failure
  */
 int32_t cam_destroy_device_hdl(int32_t dev_hdl);
-
 /**
  * cam_destroy_link_hdl() - destroy link handle
  * @dev_hdl: handle for a link.

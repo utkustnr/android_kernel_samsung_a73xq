@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright (c) 2017-2020, The Linux Foundation. All rights reserved.
- * Copyright (c) 2022-2023 Qualcomm Innovation Center, Inc. All rights reserved.
  */
 
 #include <linux/module.h>
@@ -55,7 +54,7 @@ static int cam_fd_mgr_util_packet_validate(struct cam_packet *packet,
 	}
 
 	/* All buffers must come through io config, do not support patching */
-	if (packet->num_patches || !packet->num_io_configs || !packet->num_cmd_buf) {
+	if (packet->num_patches || !packet->num_io_configs) {
 		CAM_ERR(CAM_FD, "wrong number of cmd/patch info: %u %u",
 			packet->num_cmd_buf, packet->num_patches);
 		return -EINVAL;
@@ -1854,13 +1853,11 @@ static int cam_fd_mgr_hw_prepare_update(void *hw_mgr_priv,
 	 * this will come as priv while hw_config
 	 */
 	prepare->priv = frame_req;
-
 	cam_fd_mgr_put_cpu_buf(prepare);
 	CAM_DBG(CAM_FD, "FramePrepare : Frame[%lld]", frame_req->request_id);
 
 	return 0;
-
-put_cpu_buf:
+	put_cpu_buf:
 	cam_fd_mgr_put_cpu_buf(prepare);
 error:
 	return rc;

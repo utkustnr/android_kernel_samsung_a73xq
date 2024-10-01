@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright (c) 2017-2021,  The Linux Foundation. All rights reserved.
- * Copyright (c) 2023 Qualcomm Innovation Center, Inc. All rights reserved.
  */
 
 #include <linux/delay.h>
@@ -204,20 +203,17 @@ int cam_virtual_cdm_submit_bl(struct cam_hw_info *cdm_hw,
 			if (!rc && (core->bl_tag == 63))
 				core->bl_tag = 0;
 		}
-
 		if (req->data->type == CAM_CDM_BL_CMD_TYPE_MEM_HANDLE)
 			cam_mem_put_cpu_buf(cdm_cmd->cmd[i].bl_addr.mem_handle);
 	}
 	mutex_unlock(&client->lock);
 	return rc;
-
 end:
 	if (req->data->type == CAM_CDM_BL_CMD_TYPE_MEM_HANDLE)
 		cam_mem_put_cpu_buf(cdm_cmd->cmd[i].bl_addr.mem_handle);
 
 	mutex_unlock(&client->lock);
 	return rc;
-
 }
 
 int cam_virtual_cdm_probe(struct platform_device *pdev)
