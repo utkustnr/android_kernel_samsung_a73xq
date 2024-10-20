@@ -3,6 +3,7 @@
  * drivers/mmc/host/sdhci-msm.c - Qualcomm SDHCI Platform driver
  *
  * Copyright (c) 2013-2014,2020. The Linux Foundation. All rights reserved.
+ * Copyright (c) 2022-2024 Qualcomm Innovation Center, Inc. All rights reserved.
  */
 
 #include <linux/module.h>
@@ -4890,6 +4891,7 @@ static int sdhci_msm_probe(struct platform_device *pdev)
 	host->timeout_clk_div = 4;
 	//msm_host->mmc->caps2 |= MMC_CAP2_CLK_SCALE;
 #endif
+
 	sdhci_msm_setup_pm(pdev, msm_host);
 
 	host->mmc_host_ops.execute_tuning = sdhci_msm_execute_tuning;
