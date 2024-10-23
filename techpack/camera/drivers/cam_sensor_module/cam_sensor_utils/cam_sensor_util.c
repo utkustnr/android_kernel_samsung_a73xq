@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
- * Copyright (c) 2017-2020, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2021, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2023-2024 Qualcomm Innovation Center, Inc. All rights reserved.
  */
 
 #include <linux/kernel.h>
@@ -829,7 +830,7 @@ int cam_sensor_i2c_command_parser(
 		cam_mem_put_cpu_buf(cmd_desc[i].mem_handle);
 	}
 	return rc;
-	
+
 end:
 	cam_mem_put_cpu_buf(cmd_desc[i].mem_handle);
 	return rc;
@@ -1264,12 +1265,12 @@ bool cam_sensor_util_check_gpio_is_shared(
 	struct gpio *gpio_tbl = NULL;
 
 	if (!gpio_conf) {
-		CAM_INFO(CAM_SENSOR, "No GPIO data");
+		CAM_DBG(CAM_SENSOR, "No GPIO data");
 		return false;
 	}
 
 	if (gpio_conf->cam_gpio_common_tbl_size <= 0) {
-		CAM_INFO(CAM_SENSOR, "No GPIO entry");
+		CAM_DBG(CAM_SENSOR, "No GPIO entry");
 		return false;
 	}
 
@@ -1285,13 +1286,8 @@ bool cam_sensor_util_check_gpio_is_shared(
 	rc = cam_res_mgr_util_check_if_gpio_is_shared(
 		gpio_tbl, size);
 	if (!rc) {
-		/*
-		 * After GPIO request fails, contine to
-		 * apply new gpios, outout a error message
-		 * for driver bringup debug
-		 */
 		CAM_DBG(CAM_SENSOR,
-			"dev: %s dont have shared resources",
+			"dev: %s don't have shared gpio resources",
 			soc_info->dev_name);
 		return false;
 	}
@@ -1329,22 +1325,29 @@ int32_t cam_sensor_update_power_settings(void *cmd_buf,
 	int32_t i = 0, pwr_up = 0, pwr_down = 0;
 	struct cam_sensor_power_setting *pwr_settings;
 	void *ptr = cmd_buf, *scr;
-	struct cam_cmd_power *pwr_cmd = (struct cam_cmd_power *)cmd_buf;
 	struct common_header *cmm_hdr = (struct common_header *)cmd_buf;
+	struct cam_cmd_power *pwr_cmd =
+		kzalloc(sizeof(struct cam_cmd_power), GFP_KERNEL);
+	if (!pwr_cmd)
+		return -ENOMEM;
+	memcpy(pwr_cmd, cmd_buf, sizeof(struct cam_cmd_power));
 
 	if (!pwr_cmd || !cmd_length || cmd_buf_len < (size_t)cmd_length ||
 		cam_sensor_validate(cmd_buf, cmd_buf_len)) {
 		CAM_ERR(CAM_SENSOR, "Invalid Args: pwr_cmd %pK, cmd_length: %d",
 			pwr_cmd, cmd_length);
-		return -EINVAL;
+		rc = -EINVAL;
+		goto free_power_command;
 	}
 
 	power_info->power_setting_size = 0;
 	power_info->power_setting =
 		kzalloc(sizeof(struct cam_sensor_power_setting) *
 			MAX_POWER_CONFIG, GFP_KERNEL);
-	if (!power_info->power_setting)
-		return -ENOMEM;
+	if (!power_info->power_setting) {
+		rc = -ENOMEM;
+		goto free_power_command;
+	}
 
 	power_info->power_down_setting_size = 0;
 	power_info->power_down_setting =
@@ -1354,7 +1357,8 @@ int32_t cam_sensor_update_power_settings(void *cmd_buf,
 		kfree(power_info->power_setting);
 		power_info->power_setting = NULL;
 		power_info->power_setting_size = 0;
-		return -ENOMEM;
+		rc = -ENOMEM;
+		goto free_power_command;
 	}
 
 	while (tot_size < cmd_length) {
@@ -1538,7 +1542,7 @@ int32_t cam_sensor_update_power_settings(void *cmd_buf,
 		}
 	}
 
-	return rc;
+	goto free_power_command;
 free_power_settings:
 	kfree(power_info->power_down_setting);
 	kfree(power_info->power_setting);
@@ -1546,6 +1550,9 @@ free_power_settings:
 	power_info->power_setting = NULL;
 	power_info->power_down_setting_size = 0;
 	power_info->power_setting_size = 0;
+free_power_command:
+	kfree(pwr_cmd);
+	pwr_cmd = NULL;
 	return rc;
 }
 
@@ -2207,7 +2214,8 @@ int cam_sensor_core_power_up(struct cam_sensor_power_ctrl_t *ctrl,
 			for (j = 0; j < soc_info->num_clk; j++) {
 				rc = cam_soc_util_clk_enable(soc_info->clk[j],
 					soc_info->clk_name[j],
-					soc_info->clk_rate[0][j]);
+					soc_info->clk_rate[0][j],
+					NULL);
 				if (rc)
 					break;
 			}
@@ -2373,7 +2381,7 @@ power_up_failed:
 				CAM_DBG(CAM_SENSOR, "Disable Regulator");
 				vreg_idx = power_setting->seq_val;
 
-				ret =  cam_soc_util_regulator_disable(
+				rc =  cam_soc_util_regulator_disable(
 					soc_info->rgltr[vreg_idx],
 					soc_info->rgltr_name[vreg_idx],
 					soc_info->rgltr_min_volt[vreg_idx],
@@ -2381,7 +2389,7 @@ power_up_failed:
 					soc_info->rgltr_op_mode[vreg_idx],
 					soc_info->rgltr_delay[vreg_idx]);
 
-				if (ret) {
+				if (rc) {
 					CAM_ERR(CAM_SENSOR,
 					"Fail to disalbe reg: %s",
 					soc_info->rgltr_name[vreg_idx]);
@@ -2687,6 +2695,8 @@ int cam_sensor_util_force_power_down(struct cam_sensor_power_ctrl_t *ctrl,
 			if (ret < 0) {
 				CAM_ERR(CAM_SENSOR,
 					"config clk reg failed rc: %d", ret);
+			if (!gpio_num_info) {
+				CAM_ERR(CAM_SENSOR, "failed: No gpio");
 				continue;
 			}
 			break;
@@ -2727,7 +2737,7 @@ int cam_sensor_util_force_power_down(struct cam_sensor_power_ctrl_t *ctrl,
 				if (pd->seq_val < num_vreg) {
 					CAM_DBG(CAM_SENSOR,
 						"Disable Regulator");
-					ret =  cam_soc_util_force_regulator_disable(
+					ret =  cam_soc_util_regulator_disable(
 					soc_info->rgltr[ps->seq_val],
 					soc_info->rgltr_name[ps->seq_val],
 					soc_info->rgltr_min_volt[ps->seq_val],
