@@ -629,7 +629,7 @@ int cam_soc_util_get_option_clk_by_name(struct cam_hw_soc_info *soc_info,
 }
 
 int cam_soc_util_clk_enable(struct clk *clk, const char *clk_name,
-	int32_t clk_rate)
+	int32_t clk_rate, unsigned long *applied_clock_rate)
 {
 	int rc = 0;
 
@@ -695,7 +695,8 @@ int cam_soc_util_clk_enable_default(struct cam_hw_soc_info *soc_info,
 	for (i = 0; i < soc_info->num_clk; i++) {
 		rc = cam_soc_util_clk_enable(soc_info->clk[i],
 			soc_info->clk_name[i],
-			soc_info->clk_rate[apply_level][i]);
+			soc_info->clk_rate[apply_level][i],
+			NULL);
 		if (rc)
 			goto clk_disable;
 		if (soc_info->cam_cx_ipeak_enable) {
