@@ -163,16 +163,6 @@ enum {
 };
 
 enum {
-	PRIM_MI2S = 0,
-	SEC_MI2S,
-	TERT_MI2S,
-	QUAT_MI2S,
-	QUIN_MI2S,
-	SEN_MI2S,
-	MI2S_MAX,
-};
-
-enum {
 	WSA_CDC_DMA_RX_0 = 0,
 	WSA_CDC_DMA_RX_1,
 	RX_CDC_DMA_RX_0,
@@ -248,29 +238,6 @@ struct ext_mclk_src_info {
 	u32 clk_id;
 	u32 clk_root;
 	struct ext_mclk_gpio_info *gpio_info;
-
-struct msm_asoc_mach_data {
-	struct snd_info_entry *codec_root;
-	int usbc_en2_gpio; /* used by gpio driver API */
-	int lito_v2_enabled;
-	struct device_node *dmic01_gpio_p; /* used by pinctrl API */
-	struct device_node *dmic23_gpio_p; /* used by pinctrl API */
-	struct device_node *dmic45_gpio_p; /* used by pinctrl API */
-	struct device_node *mi2s_gpio_p[MI2S_MAX]; /* used by pinctrl API */
-	atomic_t mi2s_gpio_ref_count[MI2S_MAX]; /* used by pinctrl API */
-	struct device_node *us_euro_gpio_p; /* used by pinctrl API */
-	struct pinctrl *usbc_en2_gpio_p; /* used by pinctrl API */
-	struct device_node *hph_en1_gpio_p; /* used by pinctrl API */
-	struct device_node *hph_en0_gpio_p; /* used by pinctrl API */
-	bool is_afe_config_done;
-	struct device_node *fsa_handle;
-	struct clk *lpass_audio_hw_vote;
-	int core_audio_vote_count;
-	u32 wsa_max_devs;
-	u32 tdm_max_slots; /* Max TDM slots used */
-	int wcd_disabled;
-	int (*get_wsa_dev_num)(struct snd_soc_component*);
-	struct afe_cps_hw_intf_cfg cps_config;
 };
 
 struct tdm_port {

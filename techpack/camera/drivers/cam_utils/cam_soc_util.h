@@ -475,7 +475,7 @@ int cam_soc_util_clk_put(struct clk **clk);
  * @return:             Success or failure
  */
 int cam_soc_util_clk_enable(struct clk *clk, const char *clk_name,
-	int32_t clk_rate);
+	int32_t clk_rate, unsigned long *applied_clock_rate);
 
 /**
  * cam_soc_util_set_clk_rate_level()
