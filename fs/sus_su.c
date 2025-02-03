@@ -117,7 +117,7 @@ int sus_su_fifo_init(int *maj_dev_num, char *drv_path) {
     strncpy(drv_path, rand_drv_path, strlen(rand_drv_path));
     *maj_dev_num = cur_maj_dev_num;
     SUSFS_LOGI("'%s' registered with major device number %d\n", rand_drv_path, cur_maj_dev_num);
-    
+
     if (!is_sus_su_enabled_before)
         is_sus_su_enabled_before = true;
 
