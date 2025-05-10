@@ -1,3 +1,6 @@
 [submodule "KernelSU"]
 	path = KernelSU
 	url = git@github.com:utkustnr/KernelSU.git
+[submodule "fs/ksmbd"]
+	path = fs/ksmbd
+	url = https://github.com/namjaejeon/ksmbd
